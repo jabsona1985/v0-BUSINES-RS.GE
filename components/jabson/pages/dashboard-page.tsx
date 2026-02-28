@@ -93,7 +93,7 @@ export function DashboardPage() {
                   <Icon className="w-[18px] h-[18px]" />
                 </div>
               </div>
-              <div className="text-[1.75rem] font-bold leading-none" style={{ color: 'var(--foreground)' }}>
+              <div className="text-[1.75rem] font-bold leading-none" style={{ color: 'var(--foreground)' }} suppressHydrationWarning>
                 {stat.isCurrency === false ? stat.value : formatCurrency(stat.value)}
               </div>
               <div className="flex items-center gap-1 mt-2 text-[0.75rem]" style={{ color: isUp ? '#16a34a' : '#dc2626' }}>

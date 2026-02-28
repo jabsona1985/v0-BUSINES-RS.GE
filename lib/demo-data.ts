@@ -281,10 +281,24 @@ export const paymentBreakdown = [
 ]
 
 export const formatCurrency = (amount: number): string => {
-  return `${amount.toLocaleString('ka-GE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₾`
+  // Use fixed formatting to avoid hydration mismatches between server/client locales
+  const fixed = Math.abs(amount).toFixed(2)
+  const [intPart, decPart] = fixed.split('.')
+  // Format with space as thousands separator
+  const formatted = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+  return `${amount < 0 ? '-' : ''}${formatted}.${decPart} \u20BE`
 }
 
 export const formatDate = (date: string): string => {
+  // Use fixed formatting to avoid hydration mismatches
+  const d = new Date(date)
+  const day = String(d.getDate()).padStart(2, '0')
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const year = d.getFullYear()
+  return `${day}.${month}.${year}`
+}
+
+export const formatDateLocale = (date: string): string => {
   return new Date(date).toLocaleDateString('ka-GE', {
     year: 'numeric',
     month: '2-digit',
@@ -484,7 +498,7 @@ export const demoWaybills: Waybill[] = [
     sentAt: '2024-01-18',
     createdAt: '2024-01-18',
     startAddress: 'თბილისი, რუსთაველის 12',
-    endAddress: 'თბილისი, ვაკე, ჭავჭავაძის 5',
+    endAddress: 'თბილისი, ვაკე, ჭავჭავაძ��ს 5',
     carNumber: 'AA-123-BB',
   },
   { 

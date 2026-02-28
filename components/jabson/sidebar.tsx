@@ -148,10 +148,10 @@ export function Sidebar({ activePage, onNavigate, collapsed = false, onToggleCol
           </button>
           {branchOpen && (
             <div className="mt-1 rounded-xl overflow-hidden" style={{ background: '#1a2940', border: '1px solid #1e2d3d' }}>
-              <button className="w-full text-left px-3.5 py-2 text-[0.8125rem] hover:bg-[#253553] transition-colors" style={{ color: '#e2e8f0' }}>
+              <button className="w-full text-left px-3.5 py-2 text-[0.8125rem] hover:bg-[#253553] transition-colors" style={{ color: '#e2e8f0' }} suppressHydrationWarning>
                 {'მთავარი მაღაზია'}
               </button>
-              <button className="w-full text-left px-3.5 py-2 text-[0.8125rem] hover:bg-[#253553] transition-colors" style={{ color: '#9ca3af' }}>
+              <button className="w-full text-left px-3.5 py-2 text-[0.8125rem] hover:bg-[#253553] transition-colors" style={{ color: '#9ca3af' }} suppressHydrationWarning>
                 {'ფილიალი #2 - ვაკე'}
               </button>
             </div>
@@ -167,6 +167,7 @@ export function Sidebar({ activePage, onNavigate, collapsed = false, onToggleCol
               <div
                 className="px-6 mb-1 text-[0.625rem] font-bold uppercase tracking-[0.1em]"
                 style={{ color: '#4b5563' }}
+                suppressHydrationWarning
               >
                 {section.label}
               </div>
