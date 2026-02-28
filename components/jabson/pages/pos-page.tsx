@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useCallback } from 'react'
-import { Search, X, Minus, Plus, CreditCard, Banknote, ArrowUpDown, Trash2, ShoppingCart, Printer, Check, Tag } from 'lucide-react'
+import { useState, useCallback, useEffect } from 'react'
+import { Search, X, Minus, Plus, CreditCard, Banknote, ArrowUpDown, Trash2, ShoppingCart, Printer, Check, Tag, Scan } from 'lucide-react'
 import { products, categories, formatCurrency, type Product } from '@/lib/demo-data'
+import { BarcodeScanner } from '@/components/jabson/barcode-scanner'
 
 interface CartItem {
   product: Product
@@ -19,6 +20,8 @@ export function POSPage() {
   const [cashGiven, setCashGiven] = useState('')
   const [promoCode, setPromoCode] = useState('')
   const [promoApplied, setPromoApplied] = useState(false)
+  const [showScanner, setShowScanner] = useState(false)
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
 
   const filteredProducts = products.filter((p) => {
     const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.barcode.includes(searchQuery)
@@ -51,6 +54,29 @@ export function POSPage() {
   const removeFromCart = useCallback((productId: string) => {
     setCart((prev) => prev.filter((item) => item.product.id !== productId))
   }, [])
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'F2') { e.preventDefault(); setShowScanner(true) }
+      if (e.key === 'F1') { e.preventDefault(); setCart([]) }
+      if (e.key === 'Escape') { setShowScanner(false); setShowPaymentModal(false) }
+      if (e.key === 'Enter' && cart.length > 0 && !showScanner && !showPaymentModal) {
+        e.preventDefault()
+        setShowPaymentModal(true)
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [cart, showScanner, showPaymentModal])
+
+  // Auto-hide toast
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [toast])
 
   const subtotal = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0)
   const discountPct = promoApplied ? 10 : 0
@@ -88,6 +114,15 @@ export function POSPage() {
               style={{ background: 'var(--secondary)', border: '1.5px solid var(--border)', color: 'var(--foreground)' }}
             />
           </div>
+          <button
+            onClick={() => setShowScanner(true)}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg transition-colors"
+            style={{ background: 'var(--secondary)', border: '1.5px solid var(--border)', color: 'var(--foreground)' }}
+            title="ბარკოდის სკანირება (F2)"
+          >
+            <Scan className="w-4 h-4" />
+            <span className="text-[0.8125rem] hidden sm:inline">F2</span>
+          </button>
         </div>
 
         {/* Categories */}
@@ -357,6 +392,39 @@ export function POSPage() {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Barcode Scanner */}
+      {showScanner && (
+        <BarcodeScanner
+          title="პროდუქტის სკანირება"
+          onScan={(barcode) => {
+            const product = products.find(p => p.barcode === barcode)
+            if (product) {
+              addToCart(product)
+              setToast({ message: `პროდუქტი დაემატა: ${product.name}`, type: 'success' })
+            } else {
+              setToast({ message: `ბარკოდი ვერ მოიძებნა: ${barcode}`, type: 'error' })
+            }
+            setShowScanner(false)
+          }}
+          onClose={() => setShowScanner(false)}
+        />
+      )}
+
+      {/* Toast Notification */}
+      {toast && (
+        <div
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-3 rounded-xl shadow-lg transition-all"
+          style={{
+            background: toast.type === 'success' ? '#dcfce7' : '#fee2e2',
+            border: `1px solid ${toast.type === 'success' ? '#bbf7d0' : '#fecaca'}`,
+            color: toast.type === 'success' ? '#15803d' : '#dc2626',
+          }}
+        >
+          {toast.type === 'success' ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
+          <span className="text-[0.875rem] font-medium">{toast.message}</span>
         </div>
       )}
     </div>

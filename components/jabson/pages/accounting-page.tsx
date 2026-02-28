@@ -1,15 +1,17 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, TrendingUp, TrendingDown, DollarSign, PiggyBank, Download, X, ArrowUp, ArrowDown } from 'lucide-react'
+import { Plus, TrendingUp, TrendingDown, DollarSign, PiggyBank, Download, X, ArrowUp, ArrowDown, FileText, Info } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
-import { demoTransactions, incomeCategories, expenseCategories, formatCurrency, type Transaction } from '@/lib/demo-data'
+import { demoTransactions, incomeCategories, expenseCategories, formatCurrency, sales as demoSales, demoPurchaseOrders, type Transaction } from '@/lib/demo-data'
+import { exportTransactionsToExcel, exportVATReportToExcel } from '@/lib/excel'
 
 const tabs = [
   { id: 'history', label: 'ისტორია' },
   { id: 'income', label: 'შემოსავალი' },
   { id: 'expenses', label: 'ხარჯები' },
   { id: 'report', label: 'ანგარიში' },
+  { id: 'vat', label: 'დღგ' },
 ]
 
 const PIE_COLORS = ['#16a34a', '#3b82f6', '#f59e0b', '#8b5cf6', '#ef4444']
@@ -19,6 +21,27 @@ export function AccountingPage() {
   const [activeTab, setActiveTab] = useState('history')
   const [typeFilter, setTypeFilter] = useState<string>('all')
   const [showAddModal, setShowAddModal] = useState(false)
+  const [vatMonth, setVatMonth] = useState('იანვარი 2024')
+
+  // VAT calculations
+  const salesVAT = demoSales.filter(s => !s.isReturn).map(s => ({
+    date: s.createdAt,
+    receiptNumber: s.receiptNumber,
+    base: s.subtotal / 1.18,
+    vatAmount: s.vatAmount,
+    total: s.total,
+  }))
+  const totalSalesVAT = salesVAT.reduce((sum, r) => sum + r.vatAmount, 0)
+
+  const purchasesVAT = demoPurchaseOrders.filter(p => p.status === 'received').map(p => ({
+    date: p.createdAt,
+    orderNumber: p.orderNumber,
+    base: p.total / 1.18,
+    vatAmount: p.total - (p.total / 1.18),
+    total: p.total,
+  }))
+  const totalPurchasesVAT = purchasesVAT.reduce((sum, r) => sum + r.vatAmount, 0)
+  const vatPayable = totalSalesVAT - totalPurchasesVAT
 
   const totalIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0)
   const totalExpense = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0)
@@ -303,7 +326,11 @@ export function AccountingPage() {
             </div>
           </div>
           <div className="flex flex-col gap-4">
-            <button className="flex items-center justify-center gap-2 py-3 rounded-xl text-[0.9375rem] font-medium" style={{ background: '#16a34a', color: 'white' }}>
+            <button 
+              onClick={() => exportTransactionsToExcel(transactions)}
+              className="flex items-center justify-center gap-2 py-3 rounded-xl text-[0.9375rem] font-medium" 
+              style={{ background: '#16a34a', color: 'white' }}
+            >
               <Download className="w-5 h-5" />
               {'Excel ჩამოტვირთვა'}
             </button>
@@ -312,6 +339,153 @@ export function AccountingPage() {
               {'PDF ჩამოტვირთვა'}
             </button>
           </div>
+        </div>
+      )}
+
+      {activeTab === 'vat' && (
+        <div className="space-y-4">
+          {/* VAT Header */}
+          <div className="flex items-center justify-between px-4 py-3 rounded-xl" style={{ background: 'var(--card)', border: '1px solid var(--border)' }}>
+            <div className="flex items-center gap-2">
+              <FileText className="w-5 h-5" style={{ color: '#16a34a' }} />
+              <span className="text-[0.9375rem] font-semibold" style={{ color: 'var(--foreground)' }}>{'დღგ-ს ანგარიში'}</span>
+            </div>
+            <select
+              value={vatMonth}
+              onChange={(e) => setVatMonth(e.target.value)}
+              className="px-3 py-2 rounded-lg text-[0.875rem]"
+              style={{ background: 'var(--secondary)', border: '1.5px solid var(--border)', color: 'var(--foreground)' }}
+            >
+              <option>{'იანვარი 2024'}</option>
+              <option>{'დეკემბერი 2023'}</option>
+              <option>{'ნოემბერი 2023'}</option>
+            </select>
+          </div>
+
+          {/* VAT Summary Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="flex items-center gap-3 px-4 py-3 rounded-xl" style={{ background: '#dcfce7', border: '1px solid #bbf7d0' }}>
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: '#16a34a', color: 'white' }}>
+                <TrendingUp className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="text-[0.75rem] font-medium" style={{ color: '#15803d' }}>{'გაყიდვ. დღგ'}</div>
+                <div className="text-[1.25rem] font-bold" style={{ color: '#16a34a' }}>+{formatCurrency(totalSalesVAT)}</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 px-4 py-3 rounded-xl" style={{ background: '#fee2e2', border: '1px solid #fecaca' }}>
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: '#dc2626', color: 'white' }}>
+                <TrendingDown className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="text-[0.75rem] font-medium" style={{ color: '#dc2626' }}>{'შეძ. დღგ'}</div>
+                <div className="text-[1.25rem] font-bold" style={{ color: '#dc2626' }}>-{formatCurrency(totalPurchasesVAT)}</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 px-4 py-3 rounded-xl" style={{ background: '#fef3c7', border: '1px solid #fde68a' }}>
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: '#d97706', color: 'white' }}>
+                <DollarSign className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="text-[0.75rem] font-medium" style={{ color: '#92400e' }}>{'გადასახ.'}</div>
+                <div className="text-[1.25rem] font-bold" style={{ color: '#d97706' }}>{formatCurrency(vatPayable)}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Sales VAT Table */}
+          <div className="rounded-xl overflow-hidden" style={{ background: 'var(--card)', border: '1px solid var(--border)' }}>
+            <div className="px-5 py-3" style={{ borderBottom: '1px solid var(--border)' }}>
+              <span className="text-[0.9375rem] font-semibold" style={{ color: 'var(--foreground)' }}>{'გაყიდვებიდან დღგ'}</span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr style={{ background: 'var(--secondary)' }}>
+                    <th className="px-4 py-2 text-left text-[0.75rem] font-semibold uppercase" style={{ color: 'var(--muted-foreground)' }}>{'თარიღი'}</th>
+                    <th className="px-4 py-2 text-left text-[0.75rem] font-semibold uppercase" style={{ color: 'var(--muted-foreground)' }}>{'ჩეკი'}</th>
+                    <th className="px-4 py-2 text-right text-[0.75rem] font-semibold uppercase" style={{ color: 'var(--muted-foreground)' }}>{'ბაზა'}</th>
+                    <th className="px-4 py-2 text-right text-[0.75rem] font-semibold uppercase" style={{ color: 'var(--muted-foreground)' }}>{'დღგ 18%'}</th>
+                    <th className="px-4 py-2 text-right text-[0.75rem] font-semibold uppercase" style={{ color: 'var(--muted-foreground)' }}>{'ჯამი'}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {salesVAT.slice(0, 5).map((r, i) => (
+                    <tr key={i} style={{ borderBottom: '1px solid var(--border)' }}>
+                      <td className="px-4 py-2.5 text-[0.8125rem]" style={{ color: 'var(--foreground)' }}>{r.date}</td>
+                      <td className="px-4 py-2.5 text-[0.8125rem] font-mono" style={{ color: 'var(--foreground)' }}>{r.receiptNumber}</td>
+                      <td className="px-4 py-2.5 text-right text-[0.8125rem]" style={{ color: 'var(--muted-foreground)' }}>{formatCurrency(r.base)}</td>
+                      <td className="px-4 py-2.5 text-right text-[0.8125rem] font-semibold" style={{ color: '#16a34a' }}>{formatCurrency(r.vatAmount)}</td>
+                      <td className="px-4 py-2.5 text-right text-[0.8125rem]" style={{ color: 'var(--foreground)' }}>{formatCurrency(r.total)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr style={{ background: 'var(--secondary)' }}>
+                    <td colSpan={3} className="px-4 py-2.5 text-right text-[0.8125rem] font-semibold" style={{ color: 'var(--foreground)' }}>{'სულ:'}</td>
+                    <td className="px-4 py-2.5 text-right text-[0.9375rem] font-bold" style={{ color: '#16a34a' }}>{formatCurrency(totalSalesVAT)}</td>
+                    <td></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+
+          {/* Purchases VAT Table */}
+          <div className="rounded-xl overflow-hidden" style={{ background: 'var(--card)', border: '1px solid var(--border)' }}>
+            <div className="px-5 py-3" style={{ borderBottom: '1px solid var(--border)' }}>
+              <span className="text-[0.9375rem] font-semibold" style={{ color: 'var(--foreground)' }}>{'შეძენებიდან დღგ'}</span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr style={{ background: 'var(--secondary)' }}>
+                    <th className="px-4 py-2 text-left text-[0.75rem] font-semibold uppercase" style={{ color: 'var(--muted-foreground)' }}>{'თარიღი'}</th>
+                    <th className="px-4 py-2 text-left text-[0.75rem] font-semibold uppercase" style={{ color: 'var(--muted-foreground)' }}>{'PO ნომ.'}</th>
+                    <th className="px-4 py-2 text-right text-[0.75rem] font-semibold uppercase" style={{ color: 'var(--muted-foreground)' }}>{'ბაზა'}</th>
+                    <th className="px-4 py-2 text-right text-[0.75rem] font-semibold uppercase" style={{ color: 'var(--muted-foreground)' }}>{'დღგ 18%'}</th>
+                    <th className="px-4 py-2 text-right text-[0.75rem] font-semibold uppercase" style={{ color: 'var(--muted-foreground)' }}>{'ჯამი'}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {purchasesVAT.map((r, i) => (
+                    <tr key={i} style={{ borderBottom: '1px solid var(--border)' }}>
+                      <td className="px-4 py-2.5 text-[0.8125rem]" style={{ color: 'var(--foreground)' }}>{r.date}</td>
+                      <td className="px-4 py-2.5 text-[0.8125rem] font-mono" style={{ color: 'var(--foreground)' }}>{r.orderNumber}</td>
+                      <td className="px-4 py-2.5 text-right text-[0.8125rem]" style={{ color: 'var(--muted-foreground)' }}>{formatCurrency(r.base)}</td>
+                      <td className="px-4 py-2.5 text-right text-[0.8125rem] font-semibold" style={{ color: '#dc2626' }}>{formatCurrency(r.vatAmount)}</td>
+                      <td className="px-4 py-2.5 text-right text-[0.8125rem]" style={{ color: 'var(--foreground)' }}>{formatCurrency(r.total)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr style={{ background: 'var(--secondary)' }}>
+                    <td colSpan={3} className="px-4 py-2.5 text-right text-[0.8125rem] font-semibold" style={{ color: 'var(--foreground)' }}>{'სულ:'}</td>
+                    <td className="px-4 py-2.5 text-right text-[0.9375rem] font-bold" style={{ color: '#dc2626' }}>{formatCurrency(totalPurchasesVAT)}</td>
+                    <td></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+
+          {/* Disclaimer */}
+          <div className="flex items-start gap-3 px-4 py-3 rounded-xl" style={{ background: '#dbeafe', border: '1px solid #bfdbfe' }}>
+            <Info className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: '#2563eb' }} />
+            <div className="text-[0.8125rem]" style={{ color: '#1e40af' }}>
+              {'ეს ანგარიში საინფორმაციოა. დეკლარაცია rs.ge-ზე ხელით შეიტანება.'}
+            </div>
+          </div>
+
+          {/* Export Button */}
+          <button 
+            onClick={() => exportVATReportToExcel(salesVAT, purchasesVAT, vatMonth)}
+            className="flex items-center justify-center gap-2 w-full py-3 rounded-xl text-[0.9375rem] font-medium" 
+            style={{ background: '#16a34a', color: 'white' }}
+          >
+            <Download className="w-5 h-5" />
+            {'Excel-ში ექსპორტი'}
+          </button>
         </div>
       )}
 

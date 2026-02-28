@@ -1,11 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import {
   Plus, Search, Filter, Download, Upload, MoreHorizontal, Edit2, Trash2, X,
-  Package, AlertTriangle, ChevronDown, BarChart3, Eye
+  Package, AlertTriangle, ChevronDown, BarChart3, Eye, Scan, FileSpreadsheet, Check, AlertCircle
 } from 'lucide-react'
 import { products as demoProducts, categories, formatCurrency, type Product } from '@/lib/demo-data'
+import { exportProductsToExcel, parseProductsExcel, downloadProductTemplate, type ImportResult, type ImportedProduct } from '@/lib/excel'
+import { BarcodeScanner } from '@/components/jabson/barcode-scanner'
 
 function getStockStatus(stock: number, minStock: number): { label: string; color: string; dotColor: string } {
   if (stock === 0) return { label: 'ამოწურული', color: '#6b7280', dotColor: '#9ca3af' }
@@ -22,6 +24,11 @@ export function InventoryPage() {
   const [showAddModal, setShowAddModal] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [viewProduct, setViewProduct] = useState<Product | null>(null)
+  const [showScanner, setShowScanner] = useState(false)
+  const [showImportModal, setShowImportModal] = useState(false)
+  const [importResult, setImportResult] = useState<ImportResult | null>(null)
+  const [importStep, setImportStep] = useState<'upload' | 'preview'>('upload')
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const filtered = productList.filter((p) => {
     const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase()) || p.sku.toLowerCase().includes(search.toLowerCase()) || p.barcode.includes(search)
@@ -49,6 +56,16 @@ export function InventoryPage() {
         </div>
         <div className="flex gap-2">
           <button
+            onClick={downloadProductTemplate}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-lg text-[0.8125rem] font-medium transition-colors"
+            style={{ background: 'var(--card)', border: '1.5px solid var(--border)', color: 'var(--foreground)' }}
+            title="შაბლონის ჩამოტვირთვა"
+          >
+            <FileSpreadsheet className="w-4 h-4" />
+            {'შაბლონი'}
+          </button>
+          <button
+            onClick={() => { setShowImportModal(true); setImportStep('upload'); setImportResult(null) }}
             className="flex items-center gap-2 px-3.5 py-2 rounded-lg text-[0.8125rem] font-medium transition-colors"
             style={{ background: 'var(--card)', border: '1.5px solid var(--border)', color: 'var(--foreground)' }}
           >
@@ -56,6 +73,7 @@ export function InventoryPage() {
             {'იმპორტი'}
           </button>
           <button
+            onClick={() => exportProductsToExcel(productList)}
             className="flex items-center gap-2 px-3.5 py-2 rounded-lg text-[0.8125rem] font-medium transition-colors"
             style={{ background: 'var(--card)', border: '1.5px solid var(--border)', color: 'var(--foreground)' }}
           >
@@ -147,6 +165,14 @@ export function InventoryPage() {
           <option value="low">{'დაბალი'}</option>
           <option value="out">{'ამოწურული'}</option>
         </select>
+        <button
+          onClick={() => setShowScanner(true)}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-[0.875rem] font-medium transition-colors"
+          style={{ background: 'var(--secondary)', border: '1.5px solid var(--border)', color: 'var(--foreground)' }}
+        >
+          <Scan className="w-4 h-4" />
+          {'სკანირება'}
+        </button>
       </div>
 
       {/* Products Table */}
@@ -271,6 +297,182 @@ export function InventoryPage() {
       {/* View Product Modal */}
       {viewProduct && (
         <ProductDetailModal product={viewProduct} onClose={() => setViewProduct(null)} />
+      )}
+
+      {/* Barcode Scanner */}
+      {showScanner && (
+        <BarcodeScanner
+          title="პროდუქტის პოვნა"
+          onScan={(barcode) => {
+            setSearch(barcode)
+            setShowScanner(false)
+          }}
+          onClose={() => setShowScanner(false)}
+        />
+      )}
+
+      {/* Import Modal */}
+      {showImportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgb(0 0 0/0.5)', backdropFilter: 'blur(6px)' }}>
+          <div className="w-full max-w-[560px] max-h-[90vh] overflow-y-auto rounded-2xl" style={{ background: 'var(--card)', boxShadow: '0 20px 25px -5px rgb(0 0 0/0.15)' }}>
+            <div className="flex items-start justify-between px-6 pt-6 pb-4">
+              <div>
+                <h2 className="text-[1.125rem] font-bold" style={{ color: 'var(--foreground)' }}>
+                  <FileSpreadsheet className="w-5 h-5 inline-block mr-2" style={{ color: '#16a34a' }} />
+                  {'Excel ფაილის იმპორტი'}
+                </h2>
+                <p className="text-[0.875rem] mt-0.5" style={{ color: 'var(--muted-foreground)' }}>
+                  {importStep === 'upload' ? 'ატვირთეთ .xlsx ან .xls ფაილი' : 'გადახედეთ და დაადასტურეთ'}
+                </p>
+              </div>
+              <button onClick={() => setShowImportModal(false)} className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ color: 'var(--muted-foreground)' }}>
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {importStep === 'upload' ? (
+              <div className="px-6 pb-6">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".xlsx,.xls"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0]
+                    if (file) {
+                      const result = await parseProductsExcel(file)
+                      setImportResult(result)
+                      setImportStep('preview')
+                    }
+                  }}
+                />
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex flex-col items-center justify-center gap-3 py-12 rounded-xl cursor-pointer transition-colors"
+                  style={{ border: '2px dashed var(--border)', background: 'var(--secondary)' }}
+                >
+                  <Upload className="w-10 h-10" style={{ color: 'var(--muted-foreground)' }} />
+                  <div className="text-center">
+                    <p className="text-[0.9375rem] font-medium" style={{ color: 'var(--foreground)' }}>{'ჩააგდეთ .xlsx/.xls ფაილი'}</p>
+                    <p className="text-[0.8125rem]" style={{ color: 'var(--muted-foreground)' }}>{'ან დააჭირეთ ასარჩევად'}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={downloadProductTemplate}
+                  className="flex items-center justify-center gap-2 w-full mt-4 py-2.5 rounded-lg text-[0.875rem] font-medium"
+                  style={{ background: 'var(--secondary)', border: '1.5px solid var(--border)', color: 'var(--foreground)' }}
+                >
+                  <FileSpreadsheet className="w-4 h-4" />
+                  {'შაბლონის ჩამოტვირთვა'}
+                </button>
+              </div>
+            ) : importResult && (
+              <div className="px-6 pb-6 space-y-4">
+                {/* Summary */}
+                <div className="flex gap-3">
+                  <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: '#dcfce7', border: '1px solid #bbf7d0' }}>
+                    <Check className="w-4 h-4" style={{ color: '#16a34a' }} />
+                    <span className="text-[0.875rem] font-medium" style={{ color: '#15803d' }}>{importResult.success} {'პროდუქტი მზადაა'}</span>
+                  </div>
+                  {importResult.errors.length > 0 && (
+                    <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: '#fee2e2', border: '1px solid #fecaca' }}>
+                      <AlertCircle className="w-4 h-4" style={{ color: '#dc2626' }} />
+                      <span className="text-[0.875rem] font-medium" style={{ color: '#dc2626' }}>{importResult.errors.length} {'შეცდომა'}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Errors */}
+                {importResult.errors.length > 0 && (
+                  <div className="rounded-lg p-3" style={{ background: '#fef2f2', border: '1px solid #fecaca' }}>
+                    <p className="text-[0.8125rem] font-medium mb-2" style={{ color: '#dc2626' }}>{'შეცდომები:'}</p>
+                    <ul className="space-y-1">
+                      {importResult.errors.slice(0, 5).map((err, i) => (
+                        <li key={i} className="text-[0.8125rem]" style={{ color: '#991b1b' }}>
+                          {'სტრიქონი'} {err.row}: {err.field} - {err.message}
+                        </li>
+                      ))}
+                      {importResult.errors.length > 5 && (
+                        <li className="text-[0.8125rem]" style={{ color: '#991b1b' }}>{'... და კიდევ'} {importResult.errors.length - 5}</li>
+                      )}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Preview */}
+                {importResult.data.length > 0 && (
+                  <div>
+                    <p className="text-[0.8125rem] font-medium mb-2" style={{ color: 'var(--muted-foreground)' }}>{'პირველი 5 პროდუქტი:'}</p>
+                    <div className="rounded-lg overflow-hidden" style={{ border: '1px solid var(--border)' }}>
+                      <table className="w-full text-[0.8125rem]">
+                        <thead>
+                          <tr style={{ background: 'var(--secondary)' }}>
+                            <th className="px-3 py-2 text-left font-semibold" style={{ color: 'var(--muted-foreground)' }}>{'სახელი'}</th>
+                            <th className="px-3 py-2 text-right font-semibold" style={{ color: 'var(--muted-foreground)' }}>{'ფასი'}</th>
+                            <th className="px-3 py-2 text-center font-semibold" style={{ color: 'var(--muted-foreground)' }}>{'მარაგი'}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {importResult.data.slice(0, 5).map((p, i) => (
+                            <tr key={i} style={{ borderTop: '1px solid var(--border)' }}>
+                              <td className="px-3 py-2" style={{ color: 'var(--foreground)' }}>{p.name}</td>
+                              <td className="px-3 py-2 text-right" style={{ color: 'var(--foreground)' }}>{formatCurrency(p.price)}</td>
+                              <td className="px-3 py-2 text-center" style={{ color: 'var(--foreground)' }}>{p.stock || 0}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="flex gap-3 pt-2">
+                  <button
+                    onClick={() => { setImportStep('upload'); setImportResult(null) }}
+                    className="flex-1 py-2.5 rounded-lg text-[0.875rem] font-medium"
+                    style={{ background: 'var(--secondary)', border: '1.5px solid var(--border)', color: 'var(--foreground)' }}
+                  >
+                    {'უკან'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (importResult && importResult.data.length > 0) {
+                        const newProducts: Product[] = importResult.data.map((p, idx) => ({
+                          id: `imported-${Date.now()}-${idx}`,
+                          name: p.name,
+                          sku: p.sku || `SKU-${Math.floor(Math.random() * 10000)}`,
+                          barcode: p.barcode || '',
+                          category: p.category || categories[0].name,
+                          categoryColor: categories.find(c => c.name === p.category)?.color || '#16a34a',
+                          price: p.price,
+                          costPrice: p.costPrice || 0,
+                          stock: p.stock || 0,
+                          minStock: p.minStock || 0,
+                          unit: p.unit || 'ც',
+                          vatRate: 0.18,
+                          isActive: true,
+                          posVisible: true,
+                          updatedAt: new Date().toISOString().split('T')[0],
+                        }))
+                        setProductList(prev => [...prev, ...newProducts])
+                        setShowImportModal(false)
+                        setImportResult(null)
+                        setImportStep('upload')
+                      }
+                    }}
+                    disabled={importResult.data.length === 0}
+                    className="flex-1 py-2.5 rounded-lg text-[0.875rem] font-medium disabled:opacity-50"
+                    style={{ background: '#16a34a', color: 'white', border: '1.5px solid #15803d' }}
+                  >
+                    <Check className="w-4 h-4 inline-block mr-1" />
+                    {'დამატება'} ({importResult.data.length})
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       )}
     </div>
   )

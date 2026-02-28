@@ -1,8 +1,14 @@
 'use client'
 
-import { TrendingUp, TrendingDown, DollarSign, ShoppingBag, BarChart3, Receipt } from 'lucide-react'
+import { TrendingUp, TrendingDown, DollarSign, ShoppingBag, BarChart3, Receipt, Users, Truck, ArrowRight } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell } from 'recharts'
-import { dailyStats, weeklySalesData, monthlySalesData, topProducts, paymentBreakdown, formatCurrency, sales } from '@/lib/demo-data'
+import { dailyStats, weeklySalesData, monthlySalesData, topProducts, paymentBreakdown, formatCurrency, sales, demoCustomers, demoSuppliers } from '@/lib/demo-data'
+
+// Debt calculations
+const customersWithDebt = demoCustomers.filter(c => c.balance > 0).sort((a, b) => b.balance - a.balance)
+const suppliersWeOwe = demoSuppliers.filter(s => s.balance < 0).sort((a, b) => a.balance - b.balance)
+const totalCustomerDebt = customersWithDebt.reduce((sum, c) => sum + c.balance, 0)
+const totalSupplierDebt = Math.abs(suppliersWeOwe.reduce((sum, s) => sum + s.balance, 0))
 
 const statCards = [
   {
@@ -280,6 +286,76 @@ export function DashboardPage() {
               ))}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      {/* Debt Dashboard */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Customers Owe Us */}
+        <div className="rounded-xl p-5" style={{ background: 'var(--card)', border: '1px solid var(--border)' }}>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: '#dcfce7' }}>
+                <DollarSign className="w-4 h-4" style={{ color: '#16a34a' }} />
+              </div>
+              <h3 className="text-[0.9375rem] font-semibold" style={{ color: 'var(--foreground)' }}>{'კლიენტების ვალი'}</h3>
+            </div>
+            <span className="text-[1rem] font-bold" style={{ color: '#16a34a' }}>+{formatCurrency(totalCustomerDebt)}</span>
+          </div>
+          {customersWithDebt.length > 0 ? (
+            <div className="space-y-2">
+              {customersWithDebt.slice(0, 5).map(c => (
+                <div key={c.id} className="flex items-center justify-between py-2" style={{ borderBottom: '1px solid var(--border)' }}>
+                  <div>
+                    <span className="text-[0.875rem] font-medium" style={{ color: 'var(--foreground)' }}>{c.name}</span>
+                    {c.tin && <span className="text-[0.75rem] ml-2" style={{ color: 'var(--muted-foreground)' }}>{c.tin}</span>}
+                  </div>
+                  <span className="text-[0.875rem] font-semibold" style={{ color: '#16a34a' }}>+{formatCurrency(c.balance)}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="py-6 text-center">
+              <Users className="w-10 h-10 mx-auto mb-2 opacity-20" style={{ color: 'var(--muted-foreground)' }} />
+              <p className="text-[0.875rem]" style={{ color: 'var(--muted-foreground)' }}>{'გადაუხდელი ვალი არ არის'}</p>
+            </div>
+          )}
+          <button className="flex items-center gap-1 mt-3 text-[0.8125rem] font-medium" style={{ color: '#16a34a' }}>
+            {'ყველა კლიენტი'}
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* We Owe Suppliers */}
+        <div className="rounded-xl p-5" style={{ background: 'var(--card)', border: '1px solid var(--border)' }}>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: '#fee2e2' }}>
+                <Truck className="w-4 h-4" style={{ color: '#dc2626' }} />
+              </div>
+              <h3 className="text-[0.9375rem] font-semibold" style={{ color: 'var(--foreground)' }}>{'ჩვენი ვალი მომწოდ.'}</h3>
+            </div>
+            <span className="text-[1rem] font-bold" style={{ color: '#dc2626' }}>-{formatCurrency(totalSupplierDebt)}</span>
+          </div>
+          {suppliersWeOwe.length > 0 ? (
+            <div className="space-y-2">
+              {suppliersWeOwe.slice(0, 5).map(s => (
+                <div key={s.id} className="flex items-center justify-between py-2" style={{ borderBottom: '1px solid var(--border)' }}>
+                  <span className="text-[0.875rem] font-medium" style={{ color: 'var(--foreground)' }}>{s.name}</span>
+                  <span className="text-[0.875rem] font-semibold" style={{ color: '#dc2626' }}>{formatCurrency(s.balance)}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="py-6 text-center">
+              <Truck className="w-10 h-10 mx-auto mb-2 opacity-20" style={{ color: 'var(--muted-foreground)' }} />
+              <p className="text-[0.875rem]" style={{ color: 'var(--muted-foreground)' }}>{'გადაუხდელი ვალი არ არის'}</p>
+            </div>
+          )}
+          <button className="flex items-center gap-1 mt-3 text-[0.8125rem] font-medium" style={{ color: '#dc2626' }}>
+            {'ყველა მომწოდებელი'}
+            <ArrowRight className="w-4 h-4" />
+          </button>
         </div>
       </div>
     </div>

@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { DollarSign, CreditCard, Receipt, Clock, Lock, Unlock, Plus, Minus, X, Printer } from 'lucide-react'
-import { demoCashSessions, demoCashMovements, demoTeamMembers, formatCurrency, type CashSession, type CashMovement } from '@/lib/demo-data'
+import { DollarSign, CreditCard, Receipt, Clock, Lock, Unlock, Plus, Minus, X, Printer, TrendingUp, ShoppingBag, RotateCcw, Check } from 'lucide-react'
+import { demoCashSessions, demoCashMovements, demoTeamMembers, formatCurrency, sales as demoSales, type CashSession, type CashMovement } from '@/lib/demo-data'
 
 export function CashRegisterPage() {
   const [sessions] = useState<CashSession[]>(demoCashSessions)
@@ -25,6 +25,18 @@ export function CashRegisterPage() {
   // Close session form
   const [actualCash, setActualCash] = useState('')
   const [closeNote, setCloseNote] = useState('')
+  const [eodData, setEodData] = useState<{
+    session: CashSession
+    difference: number
+    cashSales: number
+    cardSales: number
+    totalSales: number
+    receiptCount: number
+    returnCount: number
+    returnAmount: number
+    topProducts: { name: string; qty: number; revenue: number }[]
+    duration: string
+  } | null>(null)
 
   // Timer for elapsed time
   useEffect(() => {
@@ -101,6 +113,49 @@ export function CashRegisterPage() {
       expectedCash: actualExpected,
       closedAt: new Date().toISOString(),
     }
+
+    // Calculate EOD data
+    const sessionStart = new Date(currentSession.openedAt)
+    const sessionEnd = new Date()
+    const diffMs = sessionEnd.getTime() - sessionStart.getTime()
+    const hours = Math.floor(diffMs / 3600000)
+    const minutes = Math.floor((diffMs % 3600000) / 60000)
+    const duration = `${hours} სთ ${minutes} წთ`
+
+    // Get session sales
+    const sessionSales = demoSales.filter(s => !s.isReturn)
+    const sessionReturns = demoSales.filter(s => s.isReturn)
+    const cashSales = sessionSales.filter(s => s.paymentMethod === 'cash').reduce((sum, s) => sum + s.total, 0)
+    const cardSales = sessionSales.filter(s => s.paymentMethod === 'card').reduce((sum, s) => sum + s.total, 0)
+    const totalSales = cashSales + cardSales
+    const returnAmount = Math.abs(sessionReturns.reduce((sum, s) => sum + s.total, 0))
+
+    // Top 5 products
+    const productMap: Record<string, { name: string; qty: number; revenue: number }> = {}
+    sessionSales.forEach(s => {
+      s.items.forEach(item => {
+        if (!productMap[item.name]) {
+          productMap[item.name] = { name: item.name, qty: 0, revenue: 0 }
+        }
+        productMap[item.name].qty += item.quantity
+        productMap[item.name].revenue += item.total
+      })
+    })
+    const topProducts = Object.values(productMap).sort((a, b) => b.revenue - a.revenue).slice(0, 5)
+
+    setEodData({
+      session: closedSession,
+      difference: Number(actualCash) - actualExpected,
+      cashSales,
+      cardSales,
+      totalSales,
+      receiptCount: sessionSales.length,
+      returnCount: sessionReturns.length,
+      returnAmount,
+      topProducts,
+      duration,
+    })
+
     setCurrentSession(null)
     setShowCloseModal(false)
     setShowReportModal(true)
@@ -202,40 +257,175 @@ export function CashRegisterPage() {
           </div>
         )}
 
-        {/* Session Report Modal */}
-        {showReportModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgb(0 0 0/0.5)', backdropFilter: 'blur(6px)' }}>
-            <div className="w-full max-w-[400px] rounded-2xl" style={{ background: 'var(--card)', boxShadow: '0 20px 25px -5px rgb(0 0 0/0.15)' }} data-no-print>
-              <div className="flex items-start justify-between px-6 pt-6 pb-4">
-                <h2 className="text-[1.125rem] font-bold" style={{ color: 'var(--foreground)' }}>{'სმენის ანგარიში'}</h2>
-                <button onClick={() => setShowReportModal(false)} style={{ color: 'var(--muted-foreground)' }}><X className="w-5 h-5" /></button>
-              </div>
-              <div className="px-6 space-y-3">
-                <div className="text-center py-4">
-                  <div className="text-[0.875rem]" style={{ color: 'var(--muted-foreground)' }}>{'სულ გაყიდვები'}</div>
-                  <div className="text-[2rem] font-bold" style={{ color: '#16a34a' }}>{formatCurrency(lastSession?.totalSales || 0)}</div>
+        {/* End of Day Report Modal */}
+        {showReportModal && eodData && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto" style={{ background: 'rgb(0 0 0/0.5)', backdropFilter: 'blur(6px)' }}>
+            <div className="w-full max-w-[480px] my-8 rounded-2xl" style={{ background: 'var(--card)', boxShadow: '0 20px 25px -5px rgb(0 0 0/0.15)' }} data-eod-report>
+              <div className="flex items-start justify-between px-6 pt-6 pb-2">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5" style={{ color: '#16a34a' }} />
+                  <h2 className="text-[1.125rem] font-bold" style={{ color: 'var(--foreground)' }}>{'დღის ანგარიში'}</h2>
                 </div>
-                <div className="space-y-2 py-3" style={{ borderTop: '1px solid var(--border)' }}>
-                  <div className="flex justify-between text-[0.875rem]">
-                    <span style={{ color: 'var(--muted-foreground)' }}>{'ნაღდი გაყიდვები'}</span>
-                    <span style={{ color: 'var(--foreground)' }}>{formatCurrency(lastSession?.totalCash || 0)}</span>
+                <button onClick={() => { setShowReportModal(false); setEodData(null) }} className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ color: 'var(--muted-foreground)' }}>
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="px-6 pb-6 space-y-4">
+                {/* Header Info */}
+                <div className="text-center py-3 rounded-xl" style={{ background: 'var(--secondary)' }}>
+                  <div className="text-[0.9375rem] font-semibold" style={{ color: 'var(--foreground)' }}>{'მთავარი მაღაზია'}</div>
+                  <div className="text-[0.8125rem] mt-1" style={{ color: 'var(--muted-foreground)' }}>
+                    {new Date().toLocaleDateString('ka-GE', { day: 'numeric', month: 'long', year: 'numeric' })}
                   </div>
-                  <div className="flex justify-between text-[0.875rem]">
-                    <span style={{ color: 'var(--muted-foreground)' }}>{'ბარათით გაყიდვები'}</span>
-                    <span style={{ color: 'var(--foreground)' }}>{formatCurrency(lastSession?.totalCard || 0)}</span>
-                  </div>
-                  <div className="flex justify-between text-[0.875rem]">
-                    <span style={{ color: 'var(--muted-foreground)' }}>{'ჩეკების რაოდენობა'}</span>
-                    <span style={{ color: 'var(--foreground)' }}>{lastSession?.receiptCount || 0}</span>
+                  <div className="text-[0.8125rem]" style={{ color: 'var(--muted-foreground)' }}>
+                    {'სმენა:'} {eodData.duration} | {'მოლარე:'} {eodData.session.openedBy}
                   </div>
                 </div>
+
+                {/* Sales Summary */}
+                <div>
+                  <div className="text-[0.8125rem] font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--muted-foreground)' }}>{'გაყიდვები'}</div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-[0.875rem]">
+                      <span style={{ color: 'var(--muted-foreground)' }}>{'სულ ჩეკები'}</span>
+                      <span className="font-semibold" style={{ color: 'var(--foreground)' }}>{eodData.receiptCount}</span>
+                    </div>
+                    <div className="flex justify-between text-[0.875rem]">
+                      <span style={{ color: 'var(--muted-foreground)' }}>{'საშ. ჩეკი'}</span>
+                      <span className="font-semibold" style={{ color: 'var(--foreground)' }}>
+                        {formatCurrency(eodData.receiptCount > 0 ? eodData.totalSales / eodData.receiptCount : 0)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Payment Breakdown */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="w-4 h-4" style={{ color: '#16a34a' }} />
+                      <span className="text-[0.875rem]" style={{ color: 'var(--foreground)' }}>{'ნაღდი'}</span>
+                    </div>
+                    <span className="text-[0.9375rem] font-semibold" style={{ color: 'var(--foreground)' }}>{formatCurrency(eodData.cashSales)}</span>
+                  </div>
+                  <div className="h-2 rounded-full overflow-hidden mb-1" style={{ background: 'var(--secondary)' }}>
+                    <div 
+                      className="h-full rounded-full" 
+                      style={{ 
+                        background: '#16a34a', 
+                        width: `${eodData.totalSales > 0 ? (eodData.cashSales / eodData.totalSales * 100) : 0}%` 
+                      }} 
+                    />
+                  </div>
+                  <div className="text-right text-[0.75rem]" style={{ color: 'var(--muted-foreground)' }}>
+                    {eodData.totalSales > 0 ? Math.round(eodData.cashSales / eodData.totalSales * 100) : 0}%
+                  </div>
+
+                  <div className="flex items-center justify-between mb-2 mt-3">
+                    <div className="flex items-center gap-2">
+                      <CreditCard className="w-4 h-4" style={{ color: '#3b82f6' }} />
+                      <span className="text-[0.875rem]" style={{ color: 'var(--foreground)' }}>{'ბარათი'}</span>
+                    </div>
+                    <span className="text-[0.9375rem] font-semibold" style={{ color: 'var(--foreground)' }}>{formatCurrency(eodData.cardSales)}</span>
+                  </div>
+                  <div className="h-2 rounded-full overflow-hidden mb-1" style={{ background: 'var(--secondary)' }}>
+                    <div 
+                      className="h-full rounded-full" 
+                      style={{ 
+                        background: '#3b82f6', 
+                        width: `${eodData.totalSales > 0 ? (eodData.cardSales / eodData.totalSales * 100) : 0}%` 
+                      }} 
+                    />
+                  </div>
+                  <div className="text-right text-[0.75rem]" style={{ color: 'var(--muted-foreground)' }}>
+                    {eodData.totalSales > 0 ? Math.round(eodData.cardSales / eodData.totalSales * 100) : 0}%
+                  </div>
+
+                  <div className="flex justify-between items-baseline mt-4 pt-3" style={{ borderTop: '1px solid var(--border)' }}>
+                    <span className="text-[0.9375rem] font-semibold" style={{ color: 'var(--foreground)' }}>{'სულ გაყიდვები'}</span>
+                    <span className="text-[1.25rem] font-bold" style={{ color: '#16a34a' }}>{formatCurrency(eodData.totalSales)}</span>
+                  </div>
+                </div>
+
+                {/* Cash Summary */}
+                <div className="p-3 rounded-xl" style={{ background: 'var(--secondary)' }}>
+                  <div className="text-[0.8125rem] font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--muted-foreground)' }}>{'ნაღდი'}</div>
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between text-[0.875rem]">
+                      <span style={{ color: 'var(--muted-foreground)' }}>{'საწყისი'}</span>
+                      <span style={{ color: 'var(--foreground)' }}>{formatCurrency(eodData.session.openingCash)}</span>
+                    </div>
+                    <div className="flex justify-between text-[0.875rem]">
+                      <span style={{ color: 'var(--muted-foreground)' }}>{'+ ნაღდი გაყიდვ.'}</span>
+                      <span style={{ color: 'var(--foreground)' }}>{formatCurrency(eodData.cashSales)}</span>
+                    </div>
+                    <div className="flex justify-between text-[0.875rem] pt-2" style={{ borderTop: '1px dashed var(--border)' }}>
+                      <span style={{ color: 'var(--muted-foreground)' }}>{'მოსალოდნელი'}</span>
+                      <span className="font-semibold" style={{ color: 'var(--foreground)' }}>{formatCurrency(eodData.session.expectedCash || 0)}</span>
+                    </div>
+                    <div className="flex justify-between text-[0.875rem]">
+                      <span style={{ color: 'var(--muted-foreground)' }}>{'ფაქტიური'}</span>
+                      <span className="font-semibold" style={{ color: 'var(--foreground)' }}>{formatCurrency(eodData.session.closingCash || 0)}</span>
+                    </div>
+                    <div className="flex justify-between text-[0.875rem]">
+                      <span style={{ color: 'var(--muted-foreground)' }}>{'სხვაობა'}</span>
+                      <span className="font-semibold flex items-center gap-1" style={{ color: eodData.difference >= 0 ? '#16a34a' : '#dc2626' }}>
+                        {eodData.difference === 0 && <Check className="w-3.5 h-3.5" />}
+                        {eodData.difference >= 0 ? '+' : ''}{formatCurrency(eodData.difference)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Top Products */}
+                {eodData.topProducts.length > 0 && (
+                  <div>
+                    <div className="text-[0.8125rem] font-semibold uppercase tracking-wider mb-2 flex items-center gap-2" style={{ color: 'var(--muted-foreground)' }}>
+                      <ShoppingBag className="w-4 h-4" />
+                      {'ტოპ 5 პროდუქტი'}
+                    </div>
+                    <div className="space-y-1.5">
+                      {eodData.topProducts.map((p, i) => (
+                        <div key={i} className="flex justify-between text-[0.8125rem]">
+                          <span style={{ color: 'var(--foreground)' }}>{i + 1}. {p.name}</span>
+                          <span style={{ color: 'var(--muted-foreground)' }}>{p.qty}ც - {formatCurrency(p.revenue)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Returns */}
+                {eodData.returnCount > 0 && (
+                  <div className="p-3 rounded-xl" style={{ background: '#fef3c7' }}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <RotateCcw className="w-4 h-4" style={{ color: '#d97706' }} />
+                        <span className="text-[0.8125rem] font-semibold" style={{ color: '#92400e' }}>{'დაბრუნებები'}</span>
+                      </div>
+                      <span className="text-[0.875rem]" style={{ color: '#92400e' }}>
+                        {eodData.returnCount} ჩეკი - {formatCurrency(eodData.returnAmount)}
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
-              <div className="flex gap-2 px-6 py-5">
-                <button className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-[0.875rem] font-medium" style={{ background: 'var(--secondary)', color: 'var(--foreground)' }}>
+
+              <div className="flex gap-2 px-6 py-4" style={{ borderTop: '1px solid var(--border)' }}>
+                <button 
+                  onClick={() => window.print()}
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-[0.875rem] font-medium" 
+                  style={{ background: 'var(--secondary)', color: 'var(--foreground)' }}
+                >
                   <Printer className="w-4 h-4" />
                   {'ბეჭდვა'}
                 </button>
-                <button onClick={() => setShowReportModal(false)} className="flex-1 py-2.5 rounded-lg text-[0.875rem] font-medium" style={{ background: '#16a34a', color: 'white' }}>
+                <button 
+                  onClick={() => { setShowReportModal(false); setEodData(null) }} 
+                  className="flex-1 py-2.5 rounded-lg text-[0.875rem] font-medium" 
+                  style={{ background: '#16a34a', color: 'white' }}
+                >
                   {'დახურვა'}
                 </button>
               </div>

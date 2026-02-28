@@ -325,3 +325,60 @@
 .print-header {
   display: none;
 }
+
+/* ===== BARCODE SCANNER STYLES ===== */
+.scanner-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(0, 0, 0, 0.88);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+.scanner-frame {
+  width: 300px;
+  height: 200px;
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 0 0 2px #22c55e, 0 0 0 4px rgba(34, 197, 94, 0.2);
+}
+
+.scanner-frame video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.scanner-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #22c55e;
+  box-shadow: 0 0 10px #22c55e;
+  animation: scanLine 2s ease-in-out infinite;
+}
+
+@keyframes scanLine {
+  0%, 100% { top: 8%; }
+  50% { top: 80%; }
+}
+
+/* ===== END OF DAY REPORT STYLES ===== */
+[data-eod-report] {
+  font-family: 'JetBrains Mono', 'Geist Mono', monospace;
+  font-size: 12px;
+  max-width: 320px;
+  margin: 0 auto;
+}
+
+@media print {
+  [data-eod-report] {
+    max-width: 100%;
+  }
+}
