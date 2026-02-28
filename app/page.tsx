@@ -20,6 +20,12 @@ import { PlaceholderPage } from '@/components/jabson/pages/placeholder-page'
 import { RsGePage } from '@/components/jabson/pages/rsge-page'
 import { CategoriesPage } from '@/components/jabson/pages/categories-page'
 import { DistributorOrdersPage } from '@/components/jabson/pages/distributor-orders-page'
+import { PurchasesPage } from '@/components/jabson/pages/purchases-page'
+import { CashRegisterPage } from '@/components/jabson/pages/cash-register-page'
+import { WaybillsPage } from '@/components/jabson/pages/waybills-page'
+import { InvoicesPage } from '@/components/jabson/pages/invoices-page'
+import { AccountingPage } from '@/components/jabson/pages/accounting-page'
+import { CompanyPage } from '@/components/jabson/pages/company-page'
 
 export default function JabsonApp() {
   const [activePage, setActivePage] = useState('dashboard')
@@ -67,6 +73,12 @@ export default function JabsonApp() {
       case 'rsge': return <RsGePage />
       case 'categories': return <CategoriesPage />
       case 'distributor-orders': return <DistributorOrdersPage />
+      case 'purchases': return <PurchasesPage />
+      case 'cash-register': return <CashRegisterPage />
+      case 'waybills': return <WaybillsPage />
+      case 'invoices': return <InvoicesPage />
+      case 'accounting': return <AccountingPage />
+      case 'company': return <CompanyPage />
       default: return <PlaceholderPage pageId={activePage} />
     }
   }
