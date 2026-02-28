@@ -106,7 +106,7 @@ export interface AuditLogEntry {
 
 export interface Notification {
   id: string
-  type: 'stock_alert' | 'sale' | 'system' | 'transfer'
+  type: 'stock_alert' | 'sale' | 'system' | 'transfer' | 'distributor_order'
   title: string
   body: string
   isRead: boolean
@@ -233,6 +233,7 @@ export const notifications: Notification[] = [
   { id: 'n-3', type: 'stock_alert', title: 'დაბალი მარაგი', body: 'სარეცხი ფხვნილი 3კგ — 8 ც (მინ: 10)', isRead: false, createdAt: '2026-03-01T09:00:00Z' },
   { id: 'n-4', type: 'sale', title: 'ახალი გაყიდვა', body: 'RC-000144 — 24.12 ₾', isRead: true, createdAt: '2026-03-01T13:15:00Z' },
   { id: 'n-5', type: 'transfer', title: 'მოლოდინში გადატანა', body: 'ფილიალი #2 → მთავარი: ყველი იმერული 5კგ', isRead: false, createdAt: '2026-03-01T08:00:00Z' },
+  { id: 'n-6', type: 'distributor_order', title: 'ახალი დისტრ. შეკვეთა', body: 'DO-2026-0087 — სასმელების დისტრიბუტორი — 600.00 ₾', isRead: false, createdAt: '2026-03-01T09:30:00Z' },
 ]
 
 export const dailyStats = {

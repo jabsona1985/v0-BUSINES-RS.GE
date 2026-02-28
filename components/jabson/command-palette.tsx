@@ -15,6 +15,9 @@ import {
   FileText,
   Calculator,
   ArrowRight,
+  Globe,
+  FolderOpen,
+  Truck,
 } from 'lucide-react'
 import { products } from '@/lib/demo-data'
 
@@ -30,6 +33,9 @@ const pages = [
   { id: 'inventory', label: 'ინვენტარი', icon: Package },
   { id: 'sales', label: 'გაყიდვები', icon: Receipt },
   { id: 'customers', label: 'კლიენტები', icon: Users },
+  { id: 'categories', label: 'კატეგორიები', icon: FolderOpen },
+  { id: 'distributor-orders', label: 'დისტრ. შეკვეთები', icon: Truck },
+  { id: 'rsge', label: 'RS.GE ინტეგრაცია', icon: Globe },
   { id: 'adjustments', label: 'ინვენტარიზაცია', icon: ClipboardList },
   { id: 'transfers', label: 'გადატანები', icon: ArrowLeftRight },
   { id: 'accounting', label: 'ბუღალტერია', icon: Calculator },

@@ -17,6 +17,9 @@ import { AuditLogPage } from '@/components/jabson/pages/audit-log-page'
 import { ReportsPage } from '@/components/jabson/pages/reports-page'
 import { SettingsPage } from '@/components/jabson/pages/settings-page'
 import { PlaceholderPage } from '@/components/jabson/pages/placeholder-page'
+import { RsGePage } from '@/components/jabson/pages/rsge-page'
+import { CategoriesPage } from '@/components/jabson/pages/categories-page'
+import { DistributorOrdersPage } from '@/components/jabson/pages/distributor-orders-page'
 
 export default function JabsonApp() {
   const [activePage, setActivePage] = useState('dashboard')
@@ -61,6 +64,9 @@ export default function JabsonApp() {
       case 'audit-log': return <AuditLogPage />
       case 'reports': return <ReportsPage />
       case 'settings': return <SettingsPage />
+      case 'rsge': return <RsGePage />
+      case 'categories': return <CategoriesPage />
+      case 'distributor-orders': return <DistributorOrdersPage />
       default: return <PlaceholderPage pageId={activePage} />
     }
   }

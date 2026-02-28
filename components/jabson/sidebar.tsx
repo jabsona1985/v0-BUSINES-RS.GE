@@ -23,6 +23,7 @@ import {
   Layers,
   Calculator,
   AlertTriangle,
+  Globe,
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -44,8 +45,10 @@ const navSections = [
     label: 'მართვა',
     items: [
       { id: 'inventory', label: 'ინვენტარი', icon: Package },
+      { id: 'categories', label: 'კატეგორიები', icon: Layers },
       { id: 'sales', label: 'გაყიდვები', icon: Receipt },
       { id: 'purchases', label: 'შესყიდვები', icon: Truck },
+      { id: 'distributor-orders', label: 'დისტრ. შეკვეთები', icon: Truck, badgeCount: 1 },
       { id: 'customers', label: 'კლიენტები', icon: Users },
       { id: 'suppliers', label: 'მომწოდებლები', icon: Layers },
     ],
@@ -69,6 +72,7 @@ const navSections = [
   {
     label: 'rs.ge',
     items: [
+      { id: 'rsge', label: 'RS.GE ინტეგრაცია', icon: Globe },
       { id: 'waybills', label: 'ზედნადები', icon: FileText },
       { id: 'invoices', label: 'ანგარიშ-ფაქტურა', icon: FileText },
     ],

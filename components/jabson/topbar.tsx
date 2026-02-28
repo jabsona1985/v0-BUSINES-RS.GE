@@ -116,7 +116,7 @@ export function TopBar({ onToggleSidebar, onOpenCommand, darkMode, onToggleDarkM
                       <div
                         className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0"
                         style={{
-                          background: n.type === 'stock_alert' ? '#ef4444' : n.type === 'sale' ? '#16a34a' : '#3b82f6',
+                          background: n.type === 'stock_alert' ? '#ef4444' : n.type === 'sale' ? '#16a34a' : n.type === 'distributor_order' ? '#f59e0b' : '#3b82f6',
                         }}
                       />
                       <div className="flex-1 min-w-0">
