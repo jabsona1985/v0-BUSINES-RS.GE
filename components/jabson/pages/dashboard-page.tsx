@@ -50,13 +50,13 @@ const PIE_COLORS = ['#16a34a', '#3b82f6', '#f59e0b']
 
 export function DashboardPage() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" suppressHydrationWarning>
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-[1.375rem] font-bold" style={{ color: 'var(--foreground)' }}>{'დაფა'}</h1>
           <p className="text-[0.875rem] mt-0.5" style={{ color: 'var(--muted-foreground)' }}>
-            {'მთავარი მაღაზია — 1 მარტი, 2026'}
+            Main Store - 01.03.2026
           </p>
         </div>
         <div className="flex gap-2">

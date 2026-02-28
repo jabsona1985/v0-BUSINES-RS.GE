@@ -84,7 +84,7 @@ export default function JabsonApp() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden" style={{ background: 'var(--background)' }}>
+    <div className="flex h-screen overflow-hidden" style={{ background: 'var(--background)' }} suppressHydrationWarning>
       {/* Mobile overlay */}
       {mobileMenuOpen && (
         <div

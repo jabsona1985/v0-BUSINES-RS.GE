@@ -38,7 +38,7 @@ const navSections = [
     label: 'მთავარი',
     items: [
       { id: 'dashboard', label: 'დაფა', icon: LayoutDashboard },
-      { id: 'pos', label: 'POS - გაყიდვა', icon: ShoppingCart, badge: 'LIVE' },
+      { id: 'pos', label: 'POS', icon: ShoppingCart, badge: 'LIVE' },
     ],
   },
   {
@@ -90,18 +90,11 @@ const navSections = [
 export function Sidebar({ activePage, onNavigate, collapsed = false, onToggleCollapse }: SidebarProps) {
   const [branchOpen, setBranchOpen] = useState(false)
 
-  return (
+return (
     <aside
-      className={`fixed left-0 top-0 bottom-0 z-40 flex flex-col transition-all duration-300 ${
-        collapsed ? 'w-[72px]' : 'w-[260px]'
-      }`}
-      style={{ background: 'var(--sidebar-bg, #0f1724)', borderRight: '1px solid var(--sidebar-border, #1e2d3d)' }}
-    >
-      {/* Logo */}
-      <div className="flex items-center gap-3 px-4 py-4 border-b" style={{ borderColor: 'var(--sidebar-border, #1e2d3d)' }}>
-        <div
-          className="flex items-center justify-center rounded-xl font-extrabold text-sm flex-shrink-0"
-          style={{
+      className="fixed left-0 top-0 h-screen z-30 flex flex-col transition-all duration-300"
+      suppressHydrationWarning
+      style={{
             width: 36,
             height: 36,
             background: 'linear-gradient(135deg, #16a34a, #4ade80)',
@@ -152,7 +145,7 @@ export function Sidebar({ activePage, onNavigate, collapsed = false, onToggleCol
                 {'მთავარი მაღაზია'}
               </button>
               <button className="w-full text-left px-3.5 py-2 text-[0.8125rem] hover:bg-[#253553] transition-colors" style={{ color: '#9ca3af' }} suppressHydrationWarning>
-                {'ფილიალი #2 - ვაკე'}
+                Vake
               </button>
             </div>
           )}
