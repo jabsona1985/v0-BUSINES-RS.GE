@@ -38,7 +38,7 @@ const navSections = [
     label: 'მთავარი',
     items: [
       { id: 'dashboard', label: 'დაფა', icon: LayoutDashboard },
-      { id: 'pos', label: 'POS — გაყიდვა', icon: ShoppingCart, badge: 'LIVE' },
+      { id: 'pos', label: 'POS - გაყიდვა', icon: ShoppingCart, badge: 'LIVE' },
     ],
   },
   {
@@ -152,7 +152,7 @@ export function Sidebar({ activePage, onNavigate, collapsed = false, onToggleCol
                 {'მთავარი მაღაზია'}
               </button>
               <button className="w-full text-left px-3.5 py-2 text-[0.8125rem] hover:bg-[#253553] transition-colors" style={{ color: '#9ca3af' }}>
-                {'ფილიალი #2 — ვაკე'}
+                {'ფილიალი #2 - ვაკე'}
               </button>
             </div>
           )}
