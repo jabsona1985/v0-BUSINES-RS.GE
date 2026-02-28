@@ -302,3 +302,361 @@ export const reasonLabels: Record<string, string> = {
   initial: 'საწყისი',
   other: 'სხვა',
 }
+
+// Purchase Orders
+export interface PurchaseOrder {
+  id: string
+  orderNumber: string
+  supplierId: string
+  supplierName: string
+  status: 'draft' | 'ordered' | 'partial' | 'received' | 'cancelled'
+  total: number
+  itemCount: number
+  expectedDate: string | null
+  receivedDate: string | null
+  createdAt: string
+  items?: PurchaseOrderItem[]
+}
+
+export interface PurchaseOrderItem {
+  id: string
+  productId: string
+  productName: string
+  quantity: number
+  receivedQty: number
+  unitCost: number
+  total: number
+}
+
+export const demoPurchaseOrders: PurchaseOrder[] = [
+  {
+    id: '1',
+    orderNumber: 'PO-001000',
+    supplierId: 'sup-1',
+    supplierName: 'შპს "გადამამუშავებელი"',
+    status: 'received',
+    total: 2450.00,
+    itemCount: 8,
+    expectedDate: '2024-01-20',
+    receivedDate: '2024-01-19',
+    createdAt: '2024-01-15',
+    items: [
+      { id: 'poi-1', productId: 'p-1', productName: 'კოკა-კოლა 0.5ლ', quantity: 100, receivedQty: 100, unitCost: 1.80, total: 180 },
+      { id: 'poi-2', productId: 'p-2', productName: 'ფანტა 0.5ლ', quantity: 80, receivedQty: 80, unitCost: 1.80, total: 144 },
+    ]
+  },
+  {
+    id: '2',
+    orderNumber: 'PO-001001',
+    supplierId: 'sup-2',
+    supplierName: 'შპს "სასმელების დისტრ."',
+    status: 'ordered',
+    total: 890.00,
+    itemCount: 5,
+    expectedDate: '2024-01-25',
+    receivedDate: null,
+    createdAt: '2024-01-18',
+  },
+  {
+    id: '3',
+    orderNumber: 'PO-001002',
+    supplierId: 'sup-1',
+    supplierName: 'შპს "გადამამუშავებელი"',
+    status: 'draft',
+    total: 1200.00,
+    itemCount: 3,
+    expectedDate: null,
+    receivedDate: null,
+    createdAt: '2024-01-20',
+  },
+  {
+    id: '4',
+    orderNumber: 'PO-001003',
+    supplierId: 'sup-3',
+    supplierName: 'იპ "ზვიად მეღვინეთხუცესი"',
+    status: 'partial',
+    total: 1850.00,
+    itemCount: 4,
+    expectedDate: '2024-01-22',
+    receivedDate: null,
+    createdAt: '2024-01-17',
+  },
+]
+
+// Cash Sessions
+export interface CashSession {
+  id: string
+  status: 'open' | 'closed'
+  openedBy: string
+  openingCash: number
+  closingCash: number | null
+  expectedCash: number | null
+  totalSales: number
+  totalCash: number
+  totalCard: number
+  receiptCount: number
+  openedAt: string
+  closedAt: string | null
+}
+
+export interface CashMovement {
+  id: string
+  sessionId: string
+  type: 'in' | 'out'
+  amount: number
+  description: string
+  createdAt: string
+}
+
+export const demoCashSessions: CashSession[] = [
+  {
+    id: 'cs-1',
+    status: 'closed',
+    openedBy: 'ნინო კვარაცხელია',
+    openingCash: 200,
+    closingCash: 1440,
+    expectedCash: 1440,
+    totalSales: 3240,
+    totalCash: 1240,
+    totalCard: 890,
+    receiptCount: 23,
+    openedAt: '2024-01-20T09:15:00',
+    closedAt: '2024-01-20T23:45:00',
+  },
+  {
+    id: 'cs-2',
+    status: 'closed',
+    openedBy: 'დავით ქუთათელაძე',
+    openingCash: 150,
+    closingCash: 980,
+    expectedCash: 980,
+    totalSales: 2100,
+    totalCash: 830,
+    totalCard: 650,
+    receiptCount: 18,
+    openedAt: '2024-01-19T08:30:00',
+    closedAt: '2024-01-19T22:00:00',
+  },
+]
+
+export const demoCashMovements: CashMovement[] = [
+  { id: 'cm-1', sessionId: 'cs-1', type: 'in', amount: 200, description: 'საწყისი ნაღდი', createdAt: '2024-01-20T09:15:00' },
+  { id: 'cm-2', sessionId: 'cs-1', type: 'out', amount: 50, description: 'ხურდა გაცემა', createdAt: '2024-01-20T11:30:00' },
+  { id: 'cm-3', sessionId: 'cs-1', type: 'in', amount: 100, description: 'დამატებითი შემოტანა', createdAt: '2024-01-20T15:00:00' },
+]
+
+// Waybills
+export interface Waybill {
+  id: string
+  rsNumber: string | null
+  type: 1 | 2 | 3 | 4
+  status: 'draft' | 'sent' | 'confirmed' | 'rejected' | 'closed'
+  buyerName: string
+  buyerTin: string
+  total: number
+  sentAt: string | null
+  createdAt: string
+  items?: WaybillItem[]
+  startAddress?: string
+  endAddress?: string
+  carNumber?: string
+  driverTin?: string
+}
+
+export interface WaybillItem {
+  id: string
+  name: string
+  quantity: number
+  unit: string
+  price: number
+  total: number
+}
+
+export const demoWaybills: Waybill[] = [
+  { 
+    id: 'wb-1', 
+    rsNumber: 'WB-000123', 
+    type: 1, 
+    status: 'confirmed', 
+    buyerName: 'შპს "Delta"', 
+    buyerTin: '404123456', 
+    total: 1250.00, 
+    sentAt: '2024-01-18',
+    createdAt: '2024-01-18',
+    startAddress: 'თბილისი, რუსთაველის 12',
+    endAddress: 'თბილისი, ვაკე, ჭავჭავაძის 5',
+    carNumber: 'AA-123-BB',
+  },
+  { 
+    id: 'wb-2', 
+    rsNumber: null, 
+    type: 1, 
+    status: 'draft', 
+    buyerName: 'გიორგი მაისურაძე', 
+    buyerTin: '123456789', 
+    total: 340.00, 
+    sentAt: null,
+    createdAt: '2024-01-20',
+  },
+  { 
+    id: 'wb-3', 
+    rsNumber: 'WB-000124', 
+    type: 2, 
+    status: 'sent', 
+    buyerName: 'Foreign Co.', 
+    buyerTin: '987654321', 
+    total: 5600.00, 
+    sentAt: '2024-01-20',
+    createdAt: '2024-01-19',
+  },
+  { 
+    id: 'wb-4', 
+    rsNumber: 'WB-000125', 
+    type: 3, 
+    status: 'confirmed', 
+    buyerName: 'Import LLC', 
+    buyerTin: '555666777', 
+    total: 8900.00, 
+    sentAt: '2024-01-15',
+    createdAt: '2024-01-14',
+  },
+  { 
+    id: 'wb-5', 
+    rsNumber: null, 
+    type: 4, 
+    status: 'draft', 
+    buyerName: 'შპს "Delta"', 
+    buyerTin: '404123456', 
+    total: 120.00, 
+    sentAt: null,
+    createdAt: '2024-01-21',
+  },
+]
+
+// Invoices
+export interface Invoice {
+  id: string
+  rsNumber: string | null
+  status: 'draft' | 'sent' | 'confirmed' | 'rejected'
+  buyerName: string
+  buyerTin: string | null
+  total: number
+  vatAmount: number
+  comment?: string
+  createdAt: string
+  items?: InvoiceItem[]
+}
+
+export interface InvoiceItem {
+  id: string
+  name: string
+  quantity: number
+  price: number
+  vatRate: number
+  total: number
+}
+
+export const demoInvoices: Invoice[] = [
+  { 
+    id: 'inv-1', 
+    rsNumber: 'INV-000045', 
+    status: 'confirmed', 
+    buyerName: 'შპს "Delta"', 
+    buyerTin: '404123456', 
+    total: 3600.00, 
+    vatAmount: 648.00, 
+    createdAt: '2024-01-15' 
+  },
+  { 
+    id: 'inv-2', 
+    rsNumber: null, 
+    status: 'draft', 
+    buyerName: 'ანა კვარაცხელია', 
+    buyerTin: null, 
+    total: 240.00, 
+    vatAmount: 43.20, 
+    createdAt: '2024-01-20' 
+  },
+  { 
+    id: 'inv-3', 
+    rsNumber: 'INV-000046', 
+    status: 'sent', 
+    buyerName: 'გიორგი მაისურაძე', 
+    buyerTin: '123456789', 
+    total: 890.00, 
+    vatAmount: 160.20, 
+    createdAt: '2024-01-19' 
+  },
+]
+
+// Accounting Transactions
+export interface Transaction {
+  id: string
+  type: 'income' | 'expense'
+  amount: number
+  category: string
+  description: string
+  reference?: string
+  createdAt: string
+}
+
+export const demoTransactions: Transaction[] = [
+  { id: 'tr-1', type: 'income', amount: 3240.50, category: 'გაყიდვები', description: 'POS გაყიდვები', reference: 'CS-001', createdAt: '2024-01-20' },
+  { id: 'tr-2', type: 'expense', amount: 1200.00, category: 'შეძენები', description: 'PO-001000 - გადამამუშავებელი', reference: 'PO-001000', createdAt: '2024-01-19' },
+  { id: 'tr-3', type: 'expense', amount: 500.00, category: 'ქირა', description: 'ოფისის ქირა', createdAt: '2024-01-01' },
+  { id: 'tr-4', type: 'income', amount: 890.00, category: 'გაყიდვები', description: 'POS გაყიდვები', reference: 'CS-002', createdAt: '2024-01-18' },
+  { id: 'tr-5', type: 'expense', amount: 350.00, category: 'კომუნალური', description: 'ელ. ენერგია', createdAt: '2024-01-15' },
+  { id: 'tr-6', type: 'expense', amount: 2500.00, category: 'ხელფასი', description: 'თანამშრომლების ხელფასი', createdAt: '2024-01-10' },
+  { id: 'tr-7', type: 'income', amount: 1560.00, category: 'გაყიდვები', description: 'POS გაყიდვები', createdAt: '2024-01-17' },
+  { id: 'tr-8', type: 'expense', amount: 180.00, category: 'სხვა', description: 'საოფისე ნივთები', createdAt: '2024-01-12' },
+]
+
+export const incomeCategories = ['გაყიდვები', 'მომსახურება', 'სხვა']
+export const expenseCategories = ['შეძენები', 'ხელფასი', 'ქირა', 'კომუნალური', 'სხვა']
+
+// Company/Branches
+export interface Branch {
+  id: string
+  name: string
+  address: string
+  phone: string
+  isMain: boolean
+  isActive: boolean
+}
+
+export const demoBranches: Branch[] = [
+  { id: 'br-1', name: 'მთავარი მაღაზია', address: 'თბილისი, რუსთაველის 12', phone: '032 2 123 456', isMain: true, isActive: true },
+  { id: 'br-2', name: 'ფილიალი #2 - ვაკე', address: 'თბილისი, ვაკე, ჭავჭავაძის 5', phone: '032 2 789 012', isMain: false, isActive: true },
+]
+
+export interface TeamMember {
+  id: string
+  name: string
+  email: string
+  role: 'owner' | 'admin' | 'manager' | 'cashier'
+  branchId: string
+  isActive: boolean
+}
+
+export const demoTeamMembers: TeamMember[] = [
+  { id: 'tm-1', name: 'ნინო ბერიძე', email: 'nino@jabson.ge', role: 'owner', branchId: 'br-1', isActive: true },
+  { id: 'tm-2', name: 'დავით ქუთათელაძე', email: 'davit@jabson.ge', role: 'manager', branchId: 'br-1', isActive: true },
+  { id: 'tm-3', name: 'ანა კვარაცხელია', email: 'ana@jabson.ge', role: 'cashier', branchId: 'br-2', isActive: true },
+]
+
+export const roleLabels: Record<string, string> = {
+  owner: 'მფლობელი',
+  admin: 'ადმინისტრატორი',
+  manager: 'მენეჯერი',
+  cashier: 'მოლარე',
+}
+
+// Company settings
+export const companySettings = {
+  name: 'შპს "ჯაბსონი"',
+  tin: '400100200',
+  isVatPayer: true,
+  address: 'თბილისი, რუსთაველის 12',
+  phone: '032 2 123 456',
+  email: 'info@jabson.ge',
+}
