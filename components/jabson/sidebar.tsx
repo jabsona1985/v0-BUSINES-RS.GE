@@ -211,7 +211,7 @@ export function Sidebar({ activePage, onNavigate, collapsed = false, onToggleCol
                   <Icon className="w-[18px] h-[18px] flex-shrink-0" style={{ opacity: isActive ? 1 : 0.7 }} />
                   {!collapsed && (
                     <>
-                      <span className="text-[0.875rem]">{item.label}</span>
+                      <span className="text-[0.875rem]" suppressHydrationWarning>{item.label}</span>
                       {item.badge && (
                         <span className="ml-auto text-[0.625rem] font-bold px-1.5 py-0.5 rounded-full" style={{ background: '#16a34a', color: 'white' }}>
                           {item.badge}
