@@ -131,3 +131,197 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* ===== PRINT STYLES ===== */
+/* Only prints the main content area. Hides sidebar, topbar, modals, tooltips, etc. */
+@media print {
+  /* Reset page */
+  @page {
+    size: A4 portrait;
+    margin: 12mm 10mm;
+  }
+
+  /* Force light background & dark text for readability */
+  *,
+  *::before,
+  *::after {
+    color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  html, body {
+    background: #fff !important;
+    color: #111 !important;
+    font-size: 11pt !important;
+    line-height: 1.4 !important;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* ---- HIDE non-essential chrome ---- */
+  /* Sidebar */
+  aside,
+  [data-sidebar],
+  [data-print-hide] {
+    display: none !important;
+  }
+
+  /* TopBar / header */
+  header {
+    display: none !important;
+  }
+
+  /* Command palette overlay */
+  [role="dialog"],
+  [data-radix-portal],
+  .fixed {
+    display: none !important;
+  }
+
+  /* Buttons, inputs, search bars, filters */
+  button:not([data-print-keep]),
+  input:not([data-print-keep]),
+  select:not([data-print-keep]),
+  textarea:not([data-print-keep]) {
+    display: none !important;
+  }
+
+  /* Toast / notifications / tooltips */
+  [data-sonner-toaster],
+  [role="tooltip"],
+  [role="alert"] {
+    display: none !important;
+  }
+
+  /* Badges, action icons, hover overlays */
+  .no-print,
+  [data-no-print] {
+    display: none !important;
+  }
+
+  /* Scrollbars */
+  ::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  /* ---- LAYOUT adjustments ---- */
+  /* Remove sidebar margin from main content */
+  main,
+  [data-main-content] {
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Reset background/shadow on cards for print */
+  [class*="rounded-xl"],
+  [class*="rounded-2xl"] {
+    box-shadow: none !important;
+    border: 1px solid #d1d5db !important;
+    break-inside: avoid;
+  }
+
+  /* ---- TABLE formatting ---- */
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    font-size: 9pt !important;
+  }
+
+  th {
+    background: #f3f4f6 !important;
+    color: #374151 !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    font-size: 8pt !important;
+    padding: 6px 8px !important;
+    border-bottom: 2px solid #9ca3af !important;
+    text-align: left !important;
+  }
+
+  td {
+    padding: 5px 8px !important;
+    border-bottom: 1px solid #e5e7eb !important;
+    color: #111827 !important;
+  }
+
+  tr {
+    break-inside: avoid;
+  }
+
+  /* ---- CHART area: show as placeholder ---- */
+  .recharts-wrapper,
+  .recharts-surface {
+    break-inside: avoid;
+    max-height: 260px !important;
+  }
+
+  /* ---- RECEIPT specific (POS receipt modal) ---- */
+  [data-print-receipt] {
+    display: block !important;
+    position: static !important;
+    width: 80mm !important;
+    max-width: 80mm !important;
+    margin: 0 auto !important;
+    padding: 4mm !important;
+    background: #fff !important;
+    border: none !important;
+    box-shadow: none !important;
+    font-size: 9pt !important;
+  }
+
+  /* ---- FORCE visible for print-only elements ---- */
+  .print-only {
+    display: block !important;
+  }
+
+  /* ---- PAGE breaks ---- */
+  h1, h2 {
+    break-after: avoid;
+  }
+
+  .page-break {
+    break-before: always;
+  }
+
+  /* ---- Links: show URL after link text ---- */
+  a[href]::after {
+    content: " (" attr(href) ")";
+    font-size: 8pt;
+    color: #6b7280;
+  }
+
+  /* ---- Utility: force show on print ---- */
+  [data-print-show] {
+    display: block !important;
+  }
+
+  /* Company header for printed reports */
+  .print-header {
+    display: flex !important;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 10px;
+    margin-bottom: 16px;
+    border-bottom: 2px solid #111;
+  }
+
+  .print-header .company-name {
+    font-size: 16pt;
+    font-weight: 800;
+    color: #111;
+  }
+
+  .print-header .print-date {
+    font-size: 9pt;
+    color: #6b7280;
+    margin-left: auto;
+  }
+}
+
+/* Hide print-only elements on screen */
+.print-only,
+.print-header {
+  display: none;
+}
